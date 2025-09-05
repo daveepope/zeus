@@ -1,0 +1,16 @@
+target/
+*.log
+log/
+.log
+*.tmp
+tmp/
+.idea/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+*~
+*.swp
+*.bak
+.DS_Store
