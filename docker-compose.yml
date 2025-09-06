@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres-db
+    restart: always
+    environment:
+      - POSTGRES_USER=hubertjfarnsworth
+      - POSTGRES_PASSWORD=good_news_everyone!
+      - POSTGRES_DB=telemetrydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  flyway:
+    image: flyway/flyway:latest
+    container_name: flyway
+    command: -url=jdbc:postgresql://db:5432/telemetrydb -user=hubertjfarnsworth -password=good_news_everyone! migrate
+    volumes:
+      - ./flyway/sql:/flyway/sql
+    depends_on:
+      - db
+    restart: on-failure
+
+  db-seeder:
+    image: postgres:latest
+    container_name: db-seeder
+    command: >
+      bash -c "
+        echo 'Seeder: Waiting for Flyway migration to complete...';
+        until psql -h db -U hubertjfarnsworth -d telemetrydb -c 'SELECT 1 FROM sensor_types LIMIT 1;' &>/dev/null; do
+          echo 'Seeder: ...waiting for sensor_types table to be created...';
+          sleep 2;
+        done;
+        echo 'Seeder: Flyway migration detected. Seeding database...';
+        psql -h db -U hubertjfarnsworth -d telemetrydb -f /seed/V99__seed_data.sql;
+        echo 'Seeder: Database seeding finished.';
+      "
+    environment:
+      - PGPASSWORD=good_news_everyone!
+    volumes:
+      - ./flyway/seed:/seed
+    depends_on:
+      - flyway # This ensures seeding happens after migration
+    restart: on-failure
+
+volumes:
+  postgres-data:
+
