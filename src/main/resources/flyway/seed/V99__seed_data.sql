@@ -13,6 +13,7 @@ v_sensor_id TEXT := 'PLANET-EXPRESS-HQ-TEMP-HUMIDITY';
     v_event_type_id INT;
     v_temp_metric_id INT;
     v_humidity_metric_id INT;
+    v_system_user_id UUID := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'; -- Static UUID for seed data
 BEGIN
     -- Get lookup IDs from existing tables
 SELECT sensor_type_id INTO v_sensor_type_id FROM sensor_types WHERE type_name = 'Temperature and Humidity Sensor';
@@ -22,8 +23,8 @@ SELECT metric_type_id INTO v_temp_metric_id FROM metric_types WHERE type_name = 
 SELECT metric_type_id INTO v_humidity_metric_id FROM metric_types WHERE type_name = 'humidity';
 
 -- Insert Sensor (Planet Express HQ -> Times Square, NYC)
-INSERT INTO sensors (sensor_id, sensor_type_id, location, latitude, longitude, state_id, description)
-VALUES (v_sensor_id, v_sensor_type_id, 'New New York City', 40.758000, -73.985500, v_state_id, 'Monitors climate control in the main hangar.')
+INSERT INTO sensors (sensor_id, sensor_type_id, location, latitude, longitude, state_id, description, last_updated, last_updated_by)
+VALUES (v_sensor_id, v_sensor_type_id, 'New New York City', 40.758000, -73.985500, v_state_id, 'Monitors climate control in the main hangar.', NOW(), v_system_user_id)
     ON CONFLICT (sensor_id) DO NOTHING;
 
 -- Insert Event 1 (15 minutes ago)
@@ -59,6 +60,7 @@ v_sensor_id TEXT := 'MOMCORP-FACTORY-NOISE';
     v_state_id INT;
     v_event_type_id INT;
     v_noise_metric_id INT;
+    v_system_user_id UUID := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'; -- Static UUID for seed data
 BEGIN
     -- Get lookup IDs
 SELECT sensor_type_id INTO v_sensor_type_id FROM sensor_types WHERE type_name = 'Noise Sensor';
@@ -67,8 +69,8 @@ SELECT event_type_id INTO v_event_type_id FROM sensor_event_types WHERE type_nam
 SELECT metric_type_id INTO v_noise_metric_id FROM metric_types WHERE type_name = 'noise level';
 
 -- Insert Sensor (MomCorp HQ -> Wall Street, NYC)
-INSERT INTO sensors (sensor_id, sensor_type_id, location, latitude, longitude, state_id, description)
-VALUES (v_sensor_id, v_sensor_type_id, 'Financial District, New New York', 40.706100, -74.008800, v_state_id, 'Measures decibel levels on the robot factory floor.')
+INSERT INTO sensors (sensor_id, sensor_type_id, location, latitude, longitude, state_id, description, last_updated, last_updated_by)
+VALUES (v_sensor_id, v_sensor_type_id, 'Financial District, New New York', 40.706100, -74.008800, v_state_id, 'Measures decibel levels on the robot factory floor.', NOW(), v_system_user_id)
     ON CONFLICT (sensor_id) DO NOTHING;
 
 -- Insert Event
@@ -89,14 +91,15 @@ DECLARE
 v_sensor_id TEXT := 'HEAD-MUSEUM-LAWN-UV';
     v_sensor_type_id INT;
     v_state_id INT;
+    v_system_user_id UUID := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'; -- Static UUID for seed data
 BEGIN
     -- Get lookup IDs
 SELECT sensor_type_id INTO v_sensor_type_id FROM sensor_types WHERE type_name = 'UV Sensor';
 SELECT state_id INTO v_state_id FROM sensor_states WHERE state_name = 'DEACTIVATED'; -- Note: This one is off
 
 -- Insert Sensor (Head Museum -> National Mall, D.C.)
-INSERT INTO sensors (sensor_id, sensor_type_id, location, latitude, longitude, state_id, description)
-VALUES (v_sensor_id, v_sensor_type_id, 'Washington D.C.', 38.891300, -77.026000, v_state_id, 'Monitors UV to protect the preserved heads during outdoor events. Currently deactivated for maintenance.')
+INSERT INTO sensors (sensor_id, sensor_type_id, location, latitude, longitude, state_id, description, last_updated, last_updated_by)
+VALUES (v_sensor_id, v_sensor_type_id, 'Washington D.C.', 38.891300, -77.026000, v_state_id, 'Monitors UV to protect the preserved heads during outdoor events. Currently deactivated for maintenance.', NOW(), v_system_user_id)
     ON CONFLICT (sensor_id) DO NOTHING;
 
 -- Note: No events or measurements are added for this sensor since it is deactivated.
@@ -111,6 +114,7 @@ v_sensor_id TEXT := 'HEAD-MUSEUM-ROOF-RAIN-GAUGE';
     v_sensor_type_id INT;
     v_state_id INT;
     v_offline_event_type_id INT;
+    v_system_user_id UUID := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'; -- Static UUID for seed data
 BEGIN
     -- Get lookup IDs
 SELECT sensor_type_id INTO v_sensor_type_id FROM sensor_types WHERE type_name = 'Rain Gauge';
@@ -118,8 +122,8 @@ SELECT state_id INTO v_state_id FROM sensor_states WHERE state_name = 'DISCONNEC
 SELECT event_type_id INTO v_offline_event_type_id FROM sensor_event_types WHERE type_name = 'OFFLINE';
 
 -- Insert Sensor (Head Museum -> National Mall, D.C.)
-INSERT INTO sensors (sensor_id, sensor_type_id, location, latitude, longitude, state_id, description)
-VALUES (v_sensor_id, v_sensor_type_id, 'Washington D.C.', 38.891300, -77.026000, v_state_id, 'Measures rainfall on the roof of the Head Museum. Currently has a network connectivity issue.')
+INSERT INTO sensors (sensor_id, sensor_type_id, location, latitude, longitude, state_id, description, last_updated, last_updated_by)
+VALUES (v_sensor_id, v_sensor_type_id, 'Washington D.C.', 38.891300, -77.026000, v_state_id, 'Measures rainfall on the roof of the Head Museum. Currently has a network connectivity issue.', NOW(), v_system_user_id)
     ON CONFLICT (sensor_id) DO NOTHING;
 
 -- Insert an OFFLINE event that happened 5 minutes ago to log the state change

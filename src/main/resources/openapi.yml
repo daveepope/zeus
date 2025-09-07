@@ -1,0 +1,172 @@
+openapi: 3.0.3
+info:
+  title: Telemetry Ingestion API
+  description: API for managing weather sensors and ingesting telemetry data.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+tags:
+  - name: Sensor Lifecycle
+    description: Operations for registering and managing sensors.
+
+paths:
+  /sensors:
+    post:
+      tags:
+        - Sensor Lifecycle
+      summary: Register a new sensor
+      operationId: registerSensor
+      requestBody:
+        description: Details of the new sensor to register.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorRegistrationRequest'
+      responses:
+        '201':
+          description: Sensor registered successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorResponse'
+        '400':
+          description: Invalid input provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: A sensor with the given ID already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sensors/{sensorId}:
+    parameters:
+      - name: sensorId
+        in: path
+        required: true
+        description: The unique identifier of the sensor.
+        schema:
+          type: string
+    get:
+      tags:
+        - Sensor Lifecycle
+      summary: Get sensor details by ID
+      operationId: getSensorById
+      responses:
+        '200':
+          description: Sensor details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorResponse'
+        '404':
+          description: Sensor not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    SensorRegistrationRequest:
+      type: object
+      required:
+        - sensorId
+        - sensorType
+        - location
+        - latitude
+        - longitude
+      properties:
+        sensorId:
+          type: string
+          description: "A unique, human-readable identifier for the sensor."
+          example: "PLANEX-HQ-TEMP-HUMIDITY"
+        sensorType:
+          $ref: '#/components/schemas/SensorType'
+        location:
+          type: string
+          description: "A descriptive name for the sensor's location."
+          example: "Planet Express Building, New New York"
+        latitude:
+          type: number
+          format: double
+          description: "The geographical latitude of the sensor."
+          example: 40.7128
+        longitude:
+          type: number
+          format: double
+          description: "The geographical longitude of the sensor."
+          example: -74.0060
+        description:
+          type: string
+          description: "An optional detailed description of the sensor."
+          example: "Monitors the main package hangar."
+
+    SensorResponse:
+      type: object
+      description: The full representation of a sensor.
+      properties:
+        sensorId:
+          type: string
+          example: "PLANEX-HQ-TEMP-HUMIDITY"
+        sensorType:
+          type: string
+          example: "Temperature and Humidity Sensor"
+        location:
+          type: string
+          example: "Planet Express Building, New New York"
+        latitude:
+          type: number
+          format: double
+          example: 40.7128
+        longitude:
+          type: number
+          format: double
+          example: -74.0060
+        state:
+          $ref: '#/components/schemas/SensorState'
+        registrationDate:
+          type: string
+          format: date-time
+        description:
+          type: string
+
+    SensorType:
+      type: string
+      description: The type of the sensor.
+      example: "Temperature and Humidity Sensor"
+      enum:
+        - Temperature and Humidity Sensor
+        - Wind Speed Sensor
+        - Wind Direction Sensor
+        - Rain Gauge
+        - Atmospheric Pressure Sensor
+        - Solar Radiation Sensor
+        - Sunlight Sensor
+        - UV Sensor
+        - Noise Sensor
+        - Rain and Snow Sensor
+
+    SensorState:
+      type: string
+      description: The operational state of the sensor.
+      example: "DISCONNECTED"
+      enum:
+        - CONNECTED
+        - DISCONNECTED
+        - DEACTIVATED
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+

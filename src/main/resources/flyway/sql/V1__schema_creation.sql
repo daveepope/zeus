@@ -27,29 +27,30 @@ CREATE TABLE sensor_event_types
 CREATE TABLE sensors
 (
     sensor_id         TEXT PRIMARY KEY,
-    sensor_type_id    INTEGER REFERENCES sensor_types (sensor_type_id) ON DELETE RESTRICT,
-    location          TEXT,
-    latitude          NUMERIC(9, 6) CHECK (latitude >= -90 AND latitude <= 90),
-    longitude         NUMERIC(9, 6) CHECK (longitude >= -180 AND longitude <= 180),
-    state_id          INTEGER REFERENCES sensor_states (state_id) ON DELETE RESTRICT,
-    registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_updated_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    sensor_type_id    INTEGER NOT NULL REFERENCES sensor_types (sensor_type_id) ON DELETE RESTRICT,
+    location          TEXT NOT NULL,
+    latitude          NUMERIC(9, 6) NOT NULL CHECK (latitude >= -90 AND latitude <= 90),
+    longitude         NUMERIC(9, 6) NOT NULL CHECK (longitude >= -180 AND longitude <= 180),
+    state_id          INTEGER NOT NULL REFERENCES sensor_states (state_id) ON DELETE RESTRICT,
+    registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated_by   UUID NOT NULL,
     description       TEXT
 );
 
 CREATE TABLE sensor_events
 (
     event_id        BIGSERIAL PRIMARY KEY,
-    sensor_id       TEXT REFERENCES sensors (sensor_id) ON DELETE CASCADE,
-    event_type_id   INTEGER REFERENCES sensor_event_types (event_type_id) ON DELETE RESTRICT,
-    event_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    sensor_id       TEXT NOT NULL REFERENCES sensors (sensor_id) ON DELETE CASCADE,
+    event_type_id   INTEGER NOT NULL REFERENCES sensor_event_types (event_type_id) ON DELETE RESTRICT,
+    event_timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE sensor_measurements
 (
     measurement_id     BIGSERIAL PRIMARY KEY,
-    event_id           BIGINT REFERENCES sensor_events (event_id) ON DELETE CASCADE,
-    metric_type_id     INTEGER REFERENCES metric_types (metric_type_id) ON DELETE RESTRICT,
+    event_id           BIGINT NOT NULL REFERENCES sensor_events (event_id) ON DELETE CASCADE,
+    metric_type_id     INTEGER NOT NULL REFERENCES metric_types (metric_type_id) ON DELETE RESTRICT,
     measurement_value  NUMERIC(15, 6) NOT NULL,
     UNIQUE (event_id, metric_type_id)
 );
@@ -58,6 +59,7 @@ CREATE INDEX idx_sensor_events_sensor_id_timestamp ON sensor_events (sensor_id, 
 
 CREATE INDEX idx_sensor_measurements_event_id ON sensor_measurements (event_id);
 
+-- Initial data for lookup tables
 INSERT INTO sensor_types (type_name, description)
 VALUES ('Temperature and Humidity Sensor', 'Measures air temperature and relative humidity.'),
        ('Wind Speed Sensor', 'Measures wind speed.'),

@@ -41,7 +41,7 @@ services:
     volumes:
       - ./flyway/seed:/seed
     depends_on:
-      - flyway # This ensures seeding happens after migration
+      - flyway
     restart: on-failure
 
 volumes:
