@@ -10,15 +10,20 @@ import org.zeus.dbo.SensorType;
 import org.zeus.exception.SensorAlreadyExistsException;
 import org.zeus.exception.SensorNotFoundException;
 import org.zeus.mapper.sensor.SensorMapper;
+import org.zeus.model.MetricType;
 import org.zeus.model.SensorRegistrationRequest;
 import org.zeus.model.SensorResponse;
 import org.zeus.model.SensorState;
+import org.zeus.repository.measurement.MetricTypeRepository;
 import org.zeus.repository.sensor.SensorRepository;
 import org.zeus.repository.sensor.SensorStateRepository;
 import org.zeus.repository.sensor.SensorTypeRepository;
+import org.zeus.repository.measurement.SupportedMetricsRepository;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,6 +36,9 @@ public class SensorLifecycleOrchestratorImpl implements SensorLifecycleOrchestra
     private final SensorRepository sensorRepository;
     private final SensorTypeRepository sensorTypeRepository;
     private final SensorStateRepository sensorStateRepository;
+    private final SupportedMetricsRepository supportedMetricsRepository;
+    private final MetricTypeRepository metricTypeRepository;
+
     private final SensorMapper sensorMapper;
 
     @Override
@@ -49,16 +57,18 @@ public class SensorLifecycleOrchestratorImpl implements SensorLifecycleOrchestra
         org.zeus.dbo.SensorState initialState = sensorStateRepository.findByStateName(INITIAL_SENSOR_STATE)
                 .orElseThrow(() -> new IllegalStateException("Initial state '" + INITIAL_SENSOR_STATE + "' not found in database. Please check initial data seed."));
 
-        Sensor newSensor = sensorMapper.toEntity(request, sensorType, initialState);
+        var dbSensorToSave = sensorMapper.toEntity(request, sensorType, initialState);
 
-        newSensor.setLastUpdated(OffsetDateTime.now(ZoneOffset.UTC));
-        newSensor.setLastUpdatedBy(UUID.randomUUID());
-        newSensor.setRegistrationDate(OffsetDateTime.now(ZoneOffset.UTC));
+        dbSensorToSave.setLastUpdated(OffsetDateTime.now(ZoneOffset.UTC));
+        dbSensorToSave.setLastUpdatedBy(UUID.randomUUID());
+        dbSensorToSave.setRegistrationDate(OffsetDateTime.now(ZoneOffset.UTC));
 
-        Sensor savedSensor = sensorRepository.save(newSensor);
+        var savedSensor = sensorRepository.save(dbSensorToSave);
         log.info("Successfully saved sensor with ID: {}", savedSensor.getSensorId());
 
-        return sensorMapper.toResponse(savedSensor);
+        var apiSensor = sensorMapper.toResponse(savedSensor);
+        apiSensor.setSupportedMetrics(sensorMapper.mapMetricTypes(supportedMetricsRepository.findById_SensorTypeId(sensorType.getSensorTypeId())));
+        return apiSensor;
     }
 
     @Override
@@ -66,8 +76,28 @@ public class SensorLifecycleOrchestratorImpl implements SensorLifecycleOrchestra
         log.info("Attempting to retrieve sensor with ID: {}", sensorId);
         Sensor sensor = sensorRepository.findById(sensorId)
                 .orElseThrow(() -> new SensorNotFoundException("Sensor with ID '" + sensorId + "' not found."));
-
+        var apiSensor =  sensorMapper.toResponse(sensor);
+        apiSensor.setSupportedMetrics(sensorMapper.mapMetricTypes(supportedMetricsRepository.findById_SensorTypeId(sensor.getSensorType().getSensorTypeId())));
         log.info("Successfully retrieved sensor with ID: {}", sensorId);
-        return sensorMapper.toResponse(sensor);
+        return apiSensor;
+    }
+
+    @Override
+    public List<org.zeus.model.SensorType> getSupportedSensorTypes() {
+        var supportedDbTypes = sensorTypeRepository.findAll();
+        return sensorMapper.mapToApiSensorTypes(supportedDbTypes);
+    }
+
+    @Override
+    public List<SensorResponse> getSensors() {
+        var dbSensors =  sensorRepository.findAll();
+        var apiSensors = new ArrayList<SensorResponse>();
+
+        for (var dbSensor : dbSensors) {
+            var apiSensor =  sensorMapper.toResponse(dbSensor);
+            apiSensor.setSupportedMetrics(sensorMapper.mapMetricTypes(supportedMetricsRepository.findById_SensorTypeId(dbSensor.getSensorType().getSensorTypeId())));
+            apiSensors.add(apiSensor);
+        }
+        return apiSensors;
     }
 }

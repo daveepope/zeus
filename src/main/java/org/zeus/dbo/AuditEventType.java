@@ -1,18 +1,23 @@
 package org.zeus.dbo;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.GenerationType;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "sensor_event_types")
+@Table(name = "audit_event_types")
 @Getter
 @Setter
 @ToString
 @EqualsAndHashCode(of = "eventTypeId")
-public class SensorEventType {
+public class AuditEventType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

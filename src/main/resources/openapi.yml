@@ -9,9 +9,31 @@ servers:
 tags:
   - name: Sensor Lifecycle
     description: Operations for registering and managing sensors.
+  - name: Telemetry Ingestion
+    description: Endpoints for receiving and processing sensor data.
 
 paths:
   /sensors:
+    get:
+      tags:
+        - Sensor Lifecycle
+      summary: Get a list of all registered sensors
+      operationId: getSensors
+      responses:
+        '200':
+          description: A list of all registered sensors.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SensorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
       tags:
         - Sensor Lifecycle
@@ -55,7 +77,7 @@ paths:
     get:
       tags:
         - Sensor Lifecycle
-      summary: Get sensor details by ID
+      summary: Get a sensor and its meta data by ID
       operationId: getSensorById
       responses:
         '200':
@@ -64,6 +86,59 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SensorResponse'
+        '404':
+          description: Sensor not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sensors/types:
+    get:
+      tags:
+        - Sensor Lifecycle
+      summary: Get all supported sensor types
+      operationId: getSensorTypes
+      responses:
+        '200':
+          description: A list of all sensor types.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SensorType'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /measurements:
+    post:
+      tags:
+        - Telemetry Ingestion
+      summary: Submit new sensor measurements
+      operationId: ingestMeasurements
+      requestBody:
+        description: A list of new measurements from a sensor.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeasurementRequest'
+      responses:
+        '202':
+          description: Measurements accepted for processing.
+        '400':
+          description: >-
+            Invalid input provided, or a measurement type is not supported by the
+            sensor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Sensor not found.
           content:
@@ -135,22 +210,28 @@ components:
           format: date-time
         description:
           type: string
+        supportedMetrics:
+          type: array
+          description: "A list of metric types that this sensor supports."
+          items:
+            $ref: '#/components/schemas/MetricType'
 
     SensorType:
       type: string
       description: The type of the sensor.
-      example: "Temperature and Humidity Sensor"
+      example: "SMELL_O_SCOPE"
       enum:
-        - Temperature and Humidity Sensor
-        - Wind Speed Sensor
-        - Wind Direction Sensor
-        - Rain Gauge
-        - Atmospheric Pressure Sensor
-        - Solar Radiation Sensor
-        - Sunlight Sensor
-        - UV Sensor
-        - Noise Sensor
-        - Rain and Snow Sensor
+        - TEMPERATURE_AND_HUMIDITY_SENSOR
+        - WIND_SPEED_SENSOR
+        - WIND_DIRECTION_SENSOR
+        - RAIN_GAUGE
+        - ATMOSPHERIC_PRESSURE_SENSOR
+        - SOLAR_RADIATION_SENSOR
+        - SUNLIGHT_SENSOR
+        - UV_SENSOR
+        - NOISE_SENSOR
+        - RAIN_AND_SNOW_SENSOR
+        - SMELL_O_SCOPE
 
     SensorState:
       type: string
@@ -160,6 +241,10 @@ components:
         - CONNECTED
         - DISCONNECTED
         - DEACTIVATED
+        - OFFLINE
+        - ERROR
+        - MAINTENANCE
+        - LOW_BATTERY
 
     Error:
       type: object
@@ -170,3 +255,53 @@ components:
         message:
           type: string
 
+    MeasurementRequest:
+      type: object
+      required:
+        - sensorId
+        - measurements
+      properties:
+        sensorId:
+          type: string
+          description: The unique identifier of the sensor.
+          example: "PLANEX-HQ-TEMP-HUMIDITY"
+        eventTimestamp:
+          type: string
+          format: date-time
+          description: "The authoritative timestamp of the measurement event, recorded by the sensor itself."
+          example: "2025-09-07T17:21:00Z"
+        measurements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Measurement'
+
+    Measurement:
+      type: object
+      required:
+        - metricType
+        - measurementValue
+      properties:
+        metricType:
+          $ref: '#/components/schemas/MetricType'
+        measurementValue:
+          type: number
+          format: double
+          description: The value of the measurement.
+          example: 25.5
+
+    MetricType:
+      type: string
+      description: The type of the metric being measured.
+      example: "TEMPERATURE"
+      enum:
+        - TEMPERATURE
+        - HUMIDITY
+        - WIND_SPEED
+        - WIND_DIRECTION
+        - RAINFALL
+        - ATMOSPHERIC_PRESSURE
+        - SOLAR_RADIATION
+        - SUNLIGHT_INTENSITY
+        - UV_RADIATION
+        - NOISE_LEVEL
+        - FUNK_LEVEL

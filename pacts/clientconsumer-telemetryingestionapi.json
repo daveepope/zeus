@@ -1,0 +1,35 @@
+{
+  "consumer": {
+    "name": "ClientConsumer"
+  },
+  "provider": {
+    "name": "TelemetryIngestionApi"
+  },
+  "interactions": [
+    {
+      "description": "a request for a sensor that exists",
+      "providerState": "a sensor with ID sensor-123 exists",
+      "request": {
+        "method": "GET",
+        "path": "/sensors/sensor-123"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "sensorId": "sensor-123",
+          "sensorType": "Temperature and Humidity Sensor",
+          "location": "Test Location",
+          "state": "DISCONNECTED"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

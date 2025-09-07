@@ -1,6 +1,16 @@
 package org.zeus.dbo;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -11,11 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "sensor_events")
+@Table(name = "sensor_audit_events")
 @Getter
 @Setter
 @ToString(exclude = {"sensor", "measurements"})
-public class SensorEvent {
+public class SensorAuditEvent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +38,7 @@ public class SensorEvent {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_type_id", nullable = false)
-    private SensorEventType eventType;
+    private AuditEventType eventType;
 
     @CreationTimestamp
     @Column(name = "event_timestamp", updatable = false)
@@ -41,7 +51,7 @@ public class SensorEvent {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SensorEvent that = (SensorEvent) o;
+        SensorAuditEvent that = (SensorAuditEvent) o;
         return eventId != null && eventId.equals(that.eventId);
     }
 

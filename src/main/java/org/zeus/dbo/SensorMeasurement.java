@@ -1,8 +1,17 @@
 package org.zeus.dbo;
 
-import jakarta.persistence.*;
-import lombok.Getter;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Setter;
+import lombok.Getter;
 import lombok.ToString;
 
 import java.math.BigDecimal;
@@ -23,7 +32,7 @@ public class SensorMeasurement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
-    private SensorEvent event;
+    private SensorAuditEvent event;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "metric_type_id", nullable = false)
