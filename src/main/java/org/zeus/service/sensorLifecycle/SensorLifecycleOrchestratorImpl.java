@@ -3,16 +3,22 @@ package org.zeus.service.sensorLifecycle;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.zeus.dbo.AuditEventType;
 import org.zeus.dbo.Sensor;
+import org.zeus.dbo.SensorAuditEvent;
 import org.zeus.dbo.SensorType;
+import org.zeus.domain.event.SensorLifecycleEvent;
 import org.zeus.exception.SensorAlreadyExistsException;
 import org.zeus.exception.SensorNotFoundException;
 import org.zeus.mapper.sensor.SensorMapper;
 import org.zeus.model.SensorRegistrationRequest;
 import org.zeus.model.SensorResponse;
 import org.zeus.model.SensorState;
+import org.zeus.repository.telemetry.AuditEventRepository;
+import org.zeus.repository.telemetry.AuditEventTypeRepository;
 import org.zeus.repository.telemetry.MetricTypeRepository;
 import org.zeus.repository.sensor.SensorRepository;
 import org.zeus.repository.sensor.SensorStateRepository;
@@ -25,18 +31,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.zeus.domain.event.DomainConstants.SENSOR_LIFECYCLE_TOPIC;
+
 @Service
 @RequiredArgsConstructor
 public class SensorLifecycleOrchestratorImpl implements SensorLifecycleOrchestrator {
-
     private static final Logger log = LoggerFactory.getLogger(SensorLifecycleOrchestratorImpl.class);
     private static final String INITIAL_SENSOR_STATE = SensorState.DISCONNECTED.toString();
 
     private final SensorRepository sensorRepository;
+    private final AuditEventTypeRepository auditEventTypeRepository;
     private final SensorTypeRepository sensorTypeRepository;
     private final SensorStateRepository sensorStateRepository;
     private final SupportedMetricsRepository supportedMetricsRepository;
-    private final MetricTypeRepository metricTypeRepository;
+    private final AuditEventRepository auditEventRepository;
+    private final KafkaTemplate<String, SensorLifecycleEvent> kafkaTemplate; // Inject KafkaTemplate
 
     private final SensorMapper sensorMapper;
 
@@ -64,6 +73,17 @@ public class SensorLifecycleOrchestratorImpl implements SensorLifecycleOrchestra
 
         var savedSensor = sensorRepository.save(dbSensorToSave);
         log.info("Successfully saved sensor with ID: {}", savedSensor.getSensorId());
+
+        AuditEventType measurementEventType = auditEventTypeRepository.findByTypeName(org.zeus.model.AuditEventType.CONNECTED.toString())
+                .orElseThrow(() -> new IllegalStateException("Audit event type 'MEASUREMENT' not found in database."));
+
+        var auditEvent = new SensorAuditEvent();
+        auditEvent.setSensor(savedSensor);
+        auditEvent.setEventTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+        auditEvent.setEventType(measurementEventType);
+        auditEventRepository.save(auditEvent);
+
+        publishSensorLifecycleEvent(savedSensor.getSensorId(), "REGISTERED");
 
         var apiSensor = sensorMapper.toResponse(savedSensor);
         apiSensor.setSupportedMetrics(sensorMapper.mapMetricTypes(supportedMetricsRepository.findById_SensorTypeId(sensorType.getSensorTypeId())));
@@ -98,5 +118,16 @@ public class SensorLifecycleOrchestratorImpl implements SensorLifecycleOrchestra
             apiSensors.add(apiSensor);
         }
         return apiSensors;
+    }
+
+    private void publishSensorLifecycleEvent(String sensorId, String status) {
+        SensorLifecycleEvent event = SensorLifecycleEvent.builder()
+                .sensorId(sensorId)
+                .status(status)
+                .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
+                .build();
+
+        kafkaTemplate.send(SENSOR_LIFECYCLE_TOPIC, sensorId, event);
+        log.info("Published SensorLifecycleEvent for sensorId {} with status {}", sensorId, status);
     }
 }

@@ -44,6 +44,61 @@ services:
       - flyway
     restart: on-failure
 
+  kafka:
+    image: confluentinc/cp-kafka:7.2.6
+    container_name: kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    volumes:
+      - ./update_kafka_run.sh:/tmp/update_kafka_run.sh
+    command: "bash -c 'if [ ! -f /tmp/update_kafka_run.sh ]; then echo \"ERROR: Did you forget the update_kafka_run.sh file that came with this docker compose?\" && exit 1 ; else /tmp/update_kafka_run.sh && /etc/confluent/docker/run ; fi'"
+
+  kafka-topics-creator:
+    image: confluentinc/cp-kafka
+    container_name: kafka-topics-creator
+    depends_on:
+      - kafka
+    command: >
+      bash -c "echo Waiting for Kafka to be ready... && \
+      cub kafka-ready -b kafka:29092 1 20 && \
+      echo 'Creating kafka topic sensor_lifecycle' && \
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic sensor_lifecycle"
+    restart: "no"
+
+  akhq:
+    image: tchiotludo/akhq
+    container_name: akhq
+    environment:
+     AKHQ_CONFIGURATION: |
+        akhq:
+           connections:
+             local-kafka:
+               properties:
+                 bootstrap.servers: "kafka:29092"
+    ports:
+      - "8081:8080"
+    depends_on:
+      - kafka
+      - kafka-topics-creator
+
 volumes:
   postgres-data:
-
