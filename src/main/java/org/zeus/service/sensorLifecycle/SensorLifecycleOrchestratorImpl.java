@@ -75,7 +75,7 @@ public class SensorLifecycleOrchestratorImpl implements SensorLifecycleOrchestra
         log.info("Successfully saved sensor with ID: {}", savedSensor.getSensorId());
 
         AuditEventType measurementEventType = auditEventTypeRepository.findByTypeName(org.zeus.model.AuditEventType.CONNECTED.toString())
-                .orElseThrow(() -> new IllegalStateException("Audit event type 'MEASUREMENT' not found in database."));
+                .orElseThrow(() -> new IllegalStateException("Audit event type 'CONNECTED' not found in database."));
 
         var auditEvent = new SensorAuditEvent();
         auditEvent.setSensor(savedSensor);
