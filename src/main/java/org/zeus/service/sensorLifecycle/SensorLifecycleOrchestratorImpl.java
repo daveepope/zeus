@@ -19,7 +19,6 @@ import org.zeus.model.SensorResponse;
 import org.zeus.model.SensorState;
 import org.zeus.repository.telemetry.AuditEventRepository;
 import org.zeus.repository.telemetry.AuditEventTypeRepository;
-import org.zeus.repository.telemetry.MetricTypeRepository;
 import org.zeus.repository.sensor.SensorRepository;
 import org.zeus.repository.sensor.SensorStateRepository;
 import org.zeus.repository.sensor.SensorTypeRepository;

@@ -39,11 +39,9 @@ public class ReportingController implements ReportingApi {
         log.info("Received request for aggregated measurements. Sensors: {}, Metrics: {}, Statistic: {}, Start: {}, End: {}",
                 sensorIds, metricTypes, statistic, startDate, endDate);
 
-        // Delegation of business logic to the ReportingOrchestrator
-        // Note: The orchestrator's method needs to be adjusted to accept Set instead of List.
         AggregatedMeasurementResponse response = reportingOrchestrator.getAggregatedMeasurements(
-                sensorIds != null ? List.copyOf(sensorIds) : null, // Convert Set to List for the orchestrator
-                List.copyOf(metricTypes), // Convert Set to List for the orchestrator
+                sensorIds != null ? List.copyOf(sensorIds) : null,
+                List.copyOf(metricTypes),
                 statistic,
                 startDate,
                 endDate);

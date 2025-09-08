@@ -107,8 +107,6 @@ public class ReportingOrchestratorImpl implements ReportingOrchestrator {
                                     }
                                 }
 
-                                // The API spec defines the value as a 'double', so we convert the final BigDecimal.
-                                // The mapper will handle this conversion.
                                 return reportingMapper.toApiAggregatedMetric(metricType, statistic, aggregatedValue);
                             })
                             .collect(Collectors.toList());

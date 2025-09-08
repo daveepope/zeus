@@ -19,7 +19,6 @@ public class SupportedMetricId implements Serializable {
     @Column(name = "metric_type_id")
     private Integer metricTypeId;
 
-    // Getters, setters, equals, and hashCode
     public Integer getSensorTypeId() {
         return sensorTypeId;
     }

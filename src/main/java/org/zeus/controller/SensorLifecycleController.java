@@ -64,7 +64,6 @@ public class SensorLifecycleController implements SensorLifecycleApi {
 
         log.info("Received heartbeat for sensor ID: {}", sensorId);
 
-        // Delegate the work to the async service
         asyncSensorLifecycleOrchestrator.processHeartbeatAsync(sensorId, heartbeatRequest.getStatus());
 
         log.info("Heartbeat for sensor ID: {} accepted for processing. Responding 202.", sensorId);

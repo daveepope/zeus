@@ -17,7 +17,6 @@ import org.zeus.repository.sensor.SensorStateRepository;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.zeus.domain.event.DomainConstants.SENSOR_LIFECYCLE_TOPIC;
 

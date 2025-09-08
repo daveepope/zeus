@@ -73,7 +73,6 @@ public class TelemetryIngestionOrchestratorImpl implements TelemetryIngestionOrc
                 throw new InvalidMeasurementException("The metric type '" + metricName + "' is not supported by sensor '" + request.getSensorId() + "'.");
             }
 
-            // Corrected lookup for the DBO MetricType
             MetricType dboMetricType = metricTypeRepository.findByTypeName(metricName)
                     .orElseThrow(() -> {
                         log.error("Metric type '{}' not found in database, but is configured as supported.", metricName);

@@ -13,7 +13,6 @@ public class AsyncSensorLifecycleOrchestrator {
 
     private static final Logger log = LoggerFactory.getLogger(AsyncSensorLifecycleOrchestrator.class);
 
-    // This service will delegate the actual work to the synchronous, transactional orchestrator.
     private final SensorLifecycleOrchestrator sensorLifecycleOrchestrator;
 
     /**
@@ -26,8 +25,6 @@ public class AsyncSensorLifecycleOrchestrator {
         try {
             log.info("Handing off heartbeat processing to background thread for sensor ID: {}", sensorId);
 
-            // This calls the synchronous, transactional method on the real orchestrator.
-            // We are assuming the 'processHeartbeat' method will be added to that service.
             sensorLifecycleOrchestrator.processHeartbeat(sensorId, newState);
 
             log.info("Successfully completed async heartbeat for sensor ID: {}", sensorId);

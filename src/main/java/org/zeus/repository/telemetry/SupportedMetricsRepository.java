@@ -7,10 +7,6 @@ import org.zeus.dbo.SupportedMetricId;
 
 import java.util.List;
 
-/**
- * Spring Data JPA repository for the SupportedMetric entity.
- * It provides methods for querying supported metrics based on sensor type.
- */
 @Repository
 public interface SupportedMetricsRepository extends JpaRepository<SupportedMetric, SupportedMetricId> {
 
