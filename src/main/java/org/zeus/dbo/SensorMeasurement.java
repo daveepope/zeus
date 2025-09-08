@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "sensor_measurements", uniqueConstraints = {
@@ -40,6 +41,9 @@ public class SensorMeasurement {
 
     @Column(name = "measurement_value", nullable = false, precision = 15, scale = 6)
     private BigDecimal measurementValue;
+
+    @Column(name = "recorded_at", nullable = false)
+    private OffsetDateTime recordedAt;
 
     @Override
     public boolean equals(Object o) {

@@ -10,15 +10,14 @@ import org.zeus.dbo.SensorType;
 import org.zeus.exception.SensorAlreadyExistsException;
 import org.zeus.exception.SensorNotFoundException;
 import org.zeus.mapper.sensor.SensorMapper;
-import org.zeus.model.MetricType;
 import org.zeus.model.SensorRegistrationRequest;
 import org.zeus.model.SensorResponse;
 import org.zeus.model.SensorState;
-import org.zeus.repository.measurement.MetricTypeRepository;
+import org.zeus.repository.telemetry.MetricTypeRepository;
 import org.zeus.repository.sensor.SensorRepository;
 import org.zeus.repository.sensor.SensorStateRepository;
 import org.zeus.repository.sensor.SensorTypeRepository;
-import org.zeus.repository.measurement.SupportedMetricsRepository;
+import org.zeus.repository.telemetry.SupportedMetricsRepository;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

@@ -1,4 +1,4 @@
-package org.zeus.repository.measurement;
+package org.zeus.repository.telemetry;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

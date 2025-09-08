@@ -305,3 +305,16 @@ components:
         - UV_RADIATION
         - NOISE_LEVEL
         - FUNK_LEVEL
+
+    AuditEventType:
+      type: string
+      description: The type of audit event.
+      example: "MEASUREMENT"
+      enum:
+        - OFFLINE
+        - CONNECTED
+        - DISCONNECTED
+        - MEASUREMENT
+        - ERROR
+        - MAINTENANCE
+        - LOW_BATTERY

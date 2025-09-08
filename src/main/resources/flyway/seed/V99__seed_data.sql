@@ -33,9 +33,9 @@ VALUES (v_sensor_id, v_measurement_event_type_id, NOW() - INTERVAL '15 minutes')
     RETURNING event_id INTO v_event_id_1;
 
 -- Insert Measurements for Event 1
-INSERT INTO sensor_measurements (event_id, metric_type_id, measurement_value)
-VALUES (v_event_id_1, v_temp_metric_id, 22.5),  -- 22.5 C
-       (v_event_id_1, v_humidity_metric_id, 45.2); -- 45.2 %
+INSERT INTO sensor_measurements (event_id, metric_type_id, measurement_value, recorded_at)
+VALUES (v_event_id_1, v_temp_metric_id, 22.5, NOW() - INTERVAL '15 minutes'),  -- 22.5 C
+       (v_event_id_1, v_humidity_metric_id, 45.2, NOW() - INTERVAL '15 minutes'); -- 45.2 %
 
 -- Insert Event 2 (3 minutes ago)
 INSERT INTO sensor_audit_events (sensor_id, event_type_id, event_timestamp)
@@ -43,9 +43,9 @@ VALUES (v_sensor_id, v_measurement_event_type_id, NOW() - INTERVAL '3 minutes')
     RETURNING event_id INTO v_event_id_2;
 
 -- Insert Measurements for Event 2
-INSERT INTO sensor_measurements (event_id, metric_type_id, measurement_value)
-VALUES (v_event_id_2, v_temp_metric_id, 22.6),  -- 22.6 C
-       (v_event_id_2, v_humidity_metric_id, 45.0); -- 45.0 %
+INSERT INTO sensor_measurements (event_id, metric_type_id, measurement_value, recorded_at)
+VALUES (v_event_id_2, v_temp_metric_id, 22.6, NOW() - INTERVAL '3 minutes'),  -- 22.6 C
+       (v_event_id_2, v_humidity_metric_id, 45.0, NOW() - INTERVAL '3 minutes'); -- 45.0 %
 
 END $$;
 
@@ -79,8 +79,8 @@ VALUES (v_sensor_id, v_measurement_event_type_id, NOW() - INTERVAL '2 minutes')
     RETURNING event_id INTO v_event_id_1;
 
 -- Insert Measurement
-INSERT INTO sensor_measurements (event_id, metric_type_id, measurement_value)
-VALUES (v_event_id_1, v_noise_metric_id, 92.4); -- 92.4 dB (Loud!)
+INSERT INTO sensor_measurements (event_id, metric_type_id, measurement_value, recorded_at)
+VALUES (v_event_id_1, v_noise_metric_id, 92.4, NOW() - INTERVAL '2 minutes'); -- 92.4 dB (Loud!)
 
 END $$;
 
@@ -156,7 +156,7 @@ INSERT INTO sensor_audit_events (sensor_id, event_type_id, event_timestamp)
 VALUES (v_sensor_id, v_measurement_event_type_id, NOW() - INTERVAL '10 minutes')
     RETURNING event_id INTO v_event_id;
 
-INSERT INTO sensor_measurements (event_id, metric_type_id, measurement_value)
-VALUES (v_event_id, v_funk_metric_id, 8.7); -- A very funky reading
+INSERT INTO sensor_measurements (event_id, metric_type_id, measurement_value, recorded_at)
+VALUES (v_event_id, v_funk_metric_id, 8.7, NOW() - INTERVAL '10 minutes'); -- A very funky reading
 
 END $$;

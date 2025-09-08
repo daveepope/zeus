@@ -59,6 +59,7 @@ CREATE TABLE sensor_measurements
     event_id           BIGINT NOT NULL REFERENCES sensor_audit_events (event_id) ON DELETE CASCADE,
     metric_type_id     INTEGER NOT NULL REFERENCES metric_types (metric_type_id) ON DELETE RESTRICT,
     measurement_value  NUMERIC(15, 6) NOT NULL,
+    recorded_at        TIMESTAMP WITH TIME ZONE NOT NULL,
     UNIQUE (event_id, metric_type_id)
 );
 
