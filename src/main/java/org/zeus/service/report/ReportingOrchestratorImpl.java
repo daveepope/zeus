@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.zeus.dbo.SensorMeasurement;
 import org.zeus.exception.SensorNotFoundException;
 import org.zeus.model.*;
-import org.zeus.model.AggregatedMeasurementResponse;
 import org.zeus.repository.telemetry.MeasurementRepository;
 import org.zeus.repository.sensor.SensorRepository;
 import org.zeus.mapper.report.ReportingMapper;
@@ -20,6 +19,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.Cacheable;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +35,7 @@ public class ReportingOrchestratorImpl implements ReportingOrchestrator {
     private final ReportingMapper reportingMapper;
 
     @Override
+    @Cacheable(cacheNames = "reportResults")
     public AggregatedMeasurementResponse getAggregatedMeasurements(
             List<String> sensorIds,
             List<MetricType> metricTypes,
