@@ -1,320 +1,622 @@
-openapi: 3.0.3
-info:
-  title: Telemetry Ingestion API
-  description: API for managing weather sensors and ingesting telemetry data.
-  version: 1.0.0
-servers:
-  - url: http://localhost:8080
-    description: Local development server
-tags:
-  - name: Sensor Lifecycle
-    description: Operations for registering and managing sensors.
-  - name: Telemetry Ingestion
-    description: Endpoints for receiving and processing sensor data.
-
-paths:
-  /sensors:
-    get:
-      tags:
-        - Sensor Lifecycle
-      summary: Get a list of all registered sensors
-      operationId: getSensors
-      responses:
-        '200':
-          description: A list of all registered sensors.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SensorResponse'
-        '500':
-          description: Internal server error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    post:
-      tags:
-        - Sensor Lifecycle
-      summary: Register a new sensor
-      operationId: registerSensor
-      requestBody:
-        description: Details of the new sensor to register.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SensorRegistrationRequest'
-      responses:
-        '201':
-          description: Sensor registered successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SensorResponse'
-        '400':
-          description: Invalid input provided.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: A sensor with the given ID already exists.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /sensors/{sensorId}:
-    parameters:
-      - name: sensorId
-        in: path
-        required: true
-        description: The unique identifier of the sensor.
-        schema:
-          type: string
-    get:
-      tags:
-        - Sensor Lifecycle
-      summary: Get a sensor and its meta data by ID
-      operationId: getSensorById
-      responses:
-        '200':
-          description: Sensor details.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SensorResponse'
-        '404':
-          description: Sensor not found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /sensors/types:
-    get:
-      tags:
-        - Sensor Lifecycle
-      summary: Get all supported sensor types
-      operationId: getSensorTypes
-      responses:
-        '200':
-          description: A list of all sensor types.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SensorType'
-        '500':
-          description: Internal server error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /measurements:
-    post:
-      tags:
-        - Telemetry Ingestion
-      summary: Submit new sensor measurements
-      operationId: ingestMeasurements
-      requestBody:
-        description: A list of new measurements from a sensor.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MeasurementRequest'
-      responses:
-        '202':
-          description: Measurements accepted for processing.
-        '400':
-          description: >-
-            Invalid input provided, or a measurement type is not supported by the
-            sensor.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Sensor not found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-components:
-  schemas:
-    SensorRegistrationRequest:
-      type: object
-      required:
-        - sensorId
-        - sensorType
-        - location
-        - latitude
-        - longitude
-      properties:
-        sensorId:
-          type: string
-          description: "A unique, human-readable identifier for the sensor."
-          example: "PLANEX-HQ-TEMP-HUMIDITY"
-        sensorType:
-          $ref: '#/components/schemas/SensorType'
-        location:
-          type: string
-          description: "A descriptive name for the sensor's location."
-          example: "Planet Express Building, New New York"
-        latitude:
-          type: number
-          format: double
-          description: "The geographical latitude of the sensor."
-          example: 40.7128
-        longitude:
-          type: number
-          format: double
-          description: "The geographical longitude of the sensor."
-          example: -74.0060
-        description:
-          type: string
-          description: "An optional detailed description of the sensor."
-          example: "Monitors the main package hangar."
-
-    SensorResponse:
-      type: object
-      description: The full representation of a sensor.
-      properties:
-        sensorId:
-          type: string
-          example: "PLANEX-HQ-TEMP-HUMIDITY"
-        sensorType:
-          type: string
-          example: "Temperature and Humidity Sensor"
-        location:
-          type: string
-          example: "Planet Express Building, New New York"
-        latitude:
-          type: number
-          format: double
-          example: 40.7128
-        longitude:
-          type: number
-          format: double
-          example: -74.0060
-        state:
-          $ref: '#/components/schemas/SensorState'
-        registrationDate:
-          type: string
-          format: date-time
-        description:
-          type: string
-        supportedMetrics:
-          type: array
-          description: "A list of metric types that this sensor supports."
-          items:
-            $ref: '#/components/schemas/MetricType'
-
-    SensorType:
-      type: string
-      description: The type of the sensor.
-      example: "SMELL_O_SCOPE"
-      enum:
-        - TEMPERATURE_AND_HUMIDITY_SENSOR
-        - WIND_SPEED_SENSOR
-        - WIND_DIRECTION_SENSOR
-        - RAIN_GAUGE
-        - ATMOSPHERIC_PRESSURE_SENSOR
-        - SOLAR_RADIATION_SENSOR
-        - SUNLIGHT_SENSOR
-        - UV_SENSOR
-        - NOISE_SENSOR
-        - RAIN_AND_SNOW_SENSOR
-        - SMELL_O_SCOPE
-
-    SensorState:
-      type: string
-      description: The operational state of the sensor.
-      example: "DISCONNECTED"
-      enum:
-        - CONNECTED
-        - DISCONNECTED
-        - DEACTIVATED
-        - OFFLINE
-        - ERROR
-        - MAINTENANCE
-        - LOW_BATTERY
-
-    Error:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string
-
-    MeasurementRequest:
-      type: object
-      required:
-        - sensorId
-        - measurements
-      properties:
-        sensorId:
-          type: string
-          description: The unique identifier of the sensor.
-          example: "PLANEX-HQ-TEMP-HUMIDITY"
-        eventTimestamp:
-          type: string
-          format: date-time
-          description: "The authoritative timestamp of the measurement event, recorded by the sensor itself."
-          example: "2025-09-07T17:21:00Z"
-        measurements:
-          type: array
-          items:
-            $ref: '#/components/schemas/Measurement'
-
-    Measurement:
-      type: object
-      required:
-        - metricType
-        - measurementValue
-      properties:
-        metricType:
-          $ref: '#/components/schemas/MetricType'
-        measurementValue:
-          type: number
-          format: double
-          description: The value of the measurement.
-          example: 25.5
-
-    MetricType:
-      type: string
-      description: The type of the metric being measured.
-      example: "TEMPERATURE"
-      enum:
-        - TEMPERATURE
-        - HUMIDITY
-        - WIND_SPEED
-        - WIND_DIRECTION
-        - RAINFALL
-        - ATMOSPHERIC_PRESSURE
-        - SOLAR_RADIATION
-        - SUNLIGHT_INTENSITY
-        - UV_RADIATION
-        - NOISE_LEVEL
-        - FUNK_LEVEL
-
-    AuditEventType:
-      type: string
-      description: The type of audit event.
-      example: "MEASUREMENT"
-      enum:
-        - OFFLINE
-        - CONNECTED
-        - DISCONNECTED
-        - MEASUREMENT
-        - ERROR
-        - MAINTENANCE
-        - LOW_BATTERY
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Telemetry Ingestion API",
+    "description": "API for managing weather sensors and ingesting telemetry data.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Sensor Lifecycle",
+      "description": "Operations for registering and managing sensors."
+    },
+    {
+      "name": "Telemetry Ingestion",
+      "description": "Endpoints for receiving and processing sensor data."
+    },
+    {
+      "name": "Reporting",
+      "description": "Endpoints for querying and reporting on sensor data."
+    }
+  ],
+  "paths": {
+    "/sensors": {
+      "get": {
+        "tags": [
+          "Sensor Lifecycle"
+        ],
+        "summary": "Get a list of all registered sensors",
+        "operationId": "getSensors",
+        "responses": {
+          "200": {
+            "description": "A list of all registered sensors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SensorResponse"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sensor Lifecycle"
+        ],
+        "summary": "Register a new sensor",
+        "operationId": "registerSensor",
+        "requestBody": {
+          "description": "Details of the new sensor to register.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SensorRegistrationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sensor registered successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input provided.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A sensor with the given ID already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensors/{sensorId}": {
+      "parameters": [
+        {
+          "name": "sensorId",
+          "in": "path",
+          "required": true,
+          "description": "The unique identifier of the sensor.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Sensor Lifecycle"
+        ],
+        "summary": "Get a sensor and its meta data by ID",
+        "operationId": "getSensorById",
+        "responses": {
+          "200": {
+            "description": "Sensor details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sensor not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensors/types": {
+      "get": {
+        "tags": [
+          "Sensor Lifecycle"
+        ],
+        "summary": "Get all supported sensor types",
+        "operationId": "getSensorTypes",
+        "responses": {
+          "200": {
+            "description": "A list of all sensor types.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SensorType"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/measurements": {
+      "post": {
+        "tags": [
+          "Telemetry Ingestion"
+        ],
+        "summary": "Submit new sensor measurements",
+        "operationId": "ingestMeasurements",
+        "requestBody": {
+          "description": "A list of new measurements from a sensor.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasurementRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Measurements accepted for processing."
+          },
+          "400": {
+            "description": "Invalid input provided, or a measurement type is not supported by the sensor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sensor not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/measurements": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Query and aggregate sensor measurement data.",
+        "operationId": "getAggregatedMeasurements",
+        "parameters": [
+          {
+            "name": "sensorIds",
+            "in": "query",
+            "description": "Comma-separated list of sensor IDs. All sensors are included if omitted.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "style": "form",
+            "explode": false
+          },
+          {
+            "name": "metricTypes",
+            "in": "query",
+            "description": "Comma-separated list of metrics to include in results.",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/MetricType"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "style": "form",
+            "explode": false
+          },
+          {
+            "name": "statistic",
+            "in": "query",
+            "description": "The type of aggregation to perform on the metrics.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/StatisticType"
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "The start date of the query time range (ISO 8601 format). Must be within one month of endDate.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "The end date of the query time range (ISO 8601 format). Must be within one month of startDate. If both are omitted, the latest data is queried.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated sensor data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregatedMeasurementResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input provided, e.g., invalid date range or unsupported metric type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "One or more of the requested sensors were not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SensorRegistrationRequest": {
+        "type": "object",
+        "required": [
+          "sensorId",
+          "sensorType",
+          "location",
+          "latitude",
+          "longitude"
+        ],
+        "properties": {
+          "sensorId": {
+            "type": "string",
+            "description": "A unique, human-readable identifier for the sensor.",
+            "example": "PLANEX-HQ-TEMP-HUMIDITY"
+          },
+          "sensorType": {
+            "$ref": "#/components/schemas/SensorType"
+          },
+          "location": {
+            "type": "string",
+            "description": "A descriptive name for the sensor's location.",
+            "example": "Planet Express Building, New New York"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "description": "The geographical latitude of the sensor.",
+            "example": 40.7128
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "description": "The geographical longitude of the sensor.",
+            "example": -74.006
+          },
+          "description": {
+            "type": "string",
+            "description": "An optional detailed description of the sensor.",
+            "example": "Monitors the main package hangar."
+          }
+        }
+      },
+      "SensorResponse": {
+        "type": "object",
+        "description": "The full representation of a sensor.",
+        "properties": {
+          "sensorId": {
+            "type": "string",
+            "example": "PLANEX-HQ-TEMP-HUMIDITY"
+          },
+          "sensorType": {
+            "type": "string",
+            "example": "Temperature and Humidity Sensor"
+          },
+          "location": {
+            "type": "string",
+            "example": "Planet Express Building, New New York"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "example": 40.7128
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "example": -74.006
+          },
+          "state": {
+            "$ref": "#/components/schemas/SensorState"
+          },
+          "registrationDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": "string"
+          },
+          "supportedMetrics": {
+            "type": "array",
+            "description": "A list of metric types that this sensor supports.",
+            "items": {
+              "$ref": "#/components/schemas/MetricType"
+            }
+          }
+        }
+      },
+      "SensorType": {
+        "type": "string",
+        "description": "The type of the sensor.",
+        "example": "SMELL_O_SCOPE",
+        "enum": [
+          "TEMPERATURE_AND_HUMIDITY_SENSOR",
+          "WIND_SPEED_SENSOR",
+          "WIND_DIRECTION_SENSOR",
+          "RAIN_GAUGE",
+          "ATMOSPHERIC_PRESSURE_SENSOR",
+          "SOLAR_RADIATION_SENSOR",
+          "SUNLIGHT_SENSOR",
+          "UV_SENSOR",
+          "NOISE_SENSOR",
+          "RAIN_AND_SNOW_SENSOR",
+          "SMELL_O_SCOPE"
+        ]
+      },
+      "SensorState": {
+        "type": "string",
+        "description": "The operational state of the sensor.",
+        "example": "DISCONNECTED",
+        "enum": [
+          "CONNECTED",
+          "DISCONNECTED",
+          "DEACTIVATED",
+          "OFFLINE",
+          "ERROR",
+          "MAINTENANCE",
+          "LOW_BATTERY"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "MeasurementRequest": {
+        "type": "object",
+        "required": [
+          "sensorId",
+          "measurements"
+        ],
+        "properties": {
+          "sensorId": {
+            "type": "string",
+            "description": "The unique identifier of the sensor.",
+            "example": "PLANEX-HQ-TEMP-HUMIDITY"
+          },
+          "eventTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The authoritative timestamp of the measurement event, recorded by the sensor itself.",
+            "example": "2025-09-07T17:21:00Z"
+          },
+          "measurements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Measurement"
+            }
+          }
+        }
+      },
+      "Measurement": {
+        "type": "object",
+        "required": [
+          "metricType",
+          "measurementValue"
+        ],
+        "properties": {
+          "metricType": {
+            "$ref": "#/components/schemas/MetricType"
+          },
+          "measurementValue": {
+            "type": "number",
+            "format": "double",
+            "description": "The value of the measurement.",
+            "example": 25.5
+          }
+        }
+      },
+      "MetricType": {
+        "type": "string",
+        "description": "The type of the metric being measured.",
+        "example": "TEMPERATURE",
+        "enum": [
+          "TEMPERATURE",
+          "HUMIDITY",
+          "WIND_SPEED",
+          "WIND_DIRECTION",
+          "RAINFALL",
+          "ATMOSPHERIC_PRESSURE",
+          "SOLAR_RADIATION",
+          "SUNLIGHT_INTENSITY",
+          "UV_RADIATION",
+          "NOISE_LEVEL",
+          "FUNK_LEVEL"
+        ]
+      },
+      "AuditEventType": {
+        "type": "string",
+        "description": "The type of audit event.",
+        "example": "MEASUREMENT",
+        "enum": [
+          "OFFLINE",
+          "CONNECTED",
+          "DISCONNECTED",
+          "MEASUREMENT",
+          "ERROR",
+          "MAINTENANCE",
+          "LOW_BATTERY"
+        ]
+      },
+      "AggregatedMeasurementResponse": {
+        "type": "object",
+        "description": "Aggregated sensor data for a specific time range.",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AggregatedSensorResult"
+            }
+          },
+          "queryTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time the query was executed."
+          }
+        }
+      },
+      "AggregatedSensorResult": {
+        "type": "object",
+        "description": "Aggregated data for a single sensor.",
+        "properties": {
+          "sensorId": {
+            "type": "string",
+            "description": "The unique identifier of the sensor.",
+            "example": "PLANEX-HQ-TEMP-HUMIDITY"
+          },
+          "aggregatedMetrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AggregatedMetric"
+            }
+          }
+        }
+      },
+      "AggregatedMetric": {
+        "type": "object",
+        "description": "The aggregated value for a specific metric type.",
+        "properties": {
+          "metricType": {
+            "$ref": "#/components/schemas/MetricType"
+          },
+          "statistic": {
+            "$ref": "#/components/schemas/StatisticType"
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "description": "The calculated aggregated value.",
+            "example": 24.1
+          }
+        }
+      },
+      "StatisticType": {
+        "type": "string",
+        "description": "The type of statistical aggregation to apply to the data.",
+        "enum": [
+          "min",
+          "max",
+          "sum",
+          "average"
+        ]
+      }
+    }
+  }
+}
