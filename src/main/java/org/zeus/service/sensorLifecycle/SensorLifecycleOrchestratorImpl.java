@@ -120,6 +120,29 @@ public class SensorLifecycleOrchestratorImpl implements SensorLifecycleOrchestra
         return apiSensors;
     }
 
+    @Override
+    @Transactional
+    public void processHeartbeat(String sensorId, SensorState newState) {
+        log.info("Processing heartbeat for sensor ID: {} with new state: {}", sensorId, newState);
+
+        Sensor sensor = sensorRepository.findById(sensorId)
+                .orElseThrow(() -> new SensorNotFoundException("Sensor with ID '" + sensorId + "' not found."));
+
+        boolean wasDisconnected = sensor.getState().getStateName().equals(SensorState.DISCONNECTED.getValue());
+
+        org.zeus.dbo.SensorState newDboState = sensorStateRepository.findByStateName(newState.getValue())
+                .orElseThrow(() -> new IllegalStateException("State '" + newState.getValue() + "' not found in database."));
+
+        sensor.setState(newDboState);
+        sensor.setLastUpdated(OffsetDateTime.now(ZoneOffset.UTC));
+        sensorRepository.save(sensor);
+
+        if (wasDisconnected && newState == SensorState.CONNECTED) {
+            log.info("Sensor {} has reconnected. Publishing CONNECTED event.", sensorId);
+            publishSensorLifecycleEvent(sensorId, SensorState.CONNECTED.getValue());
+        }
+    }
+
     private void publishSensorLifecycleEvent(String sensorId, String status) {
         SensorLifecycleEvent event = SensorLifecycleEvent.builder()
                 .sensorId(sensorId)

@@ -10,14 +10,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.zeus.exception.SensorAlreadyExistsException;
 import org.zeus.exception.SensorNotFoundException;
+import org.zeus.model.HeartbeatRequest;
 import org.zeus.model.SensorRegistrationRequest;
 import org.zeus.model.SensorResponse;
 import org.zeus.model.SensorState;
 import org.zeus.model.SensorType;
+import org.zeus.service.sensorLifecycle.AsyncSensorLifecycleOrchestrator;
 import org.zeus.service.sensorLifecycle.SensorLifecycleOrchestrator;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -32,6 +36,9 @@ class SensorLifecycleControllerTest {
 
     @MockBean
     private SensorLifecycleOrchestrator sensorLifecycleOrchestrator;
+
+    @MockBean
+    private AsyncSensorLifecycleOrchestrator asyncSensorLifecycleOrchestrator;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -101,5 +108,19 @@ class SensorLifecycleControllerTest {
         mockMvc.perform(get("/sensors/{sensorId}", SENSOR_ID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void sensorHeartbeat_whenGivenValidRequest_shouldCallAsyncOrchestratorAndReturnAccepted() throws Exception {
+        HeartbeatRequest heartbeatRequest = new HeartbeatRequest();
+        heartbeatRequest.setStatus(SensorState.CONNECTED);
+
+        mockMvc.perform(post("/sensors/{sensorId}/heartbeat", SENSOR_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(heartbeatRequest)))
+                .andExpect(status().isAccepted());
+
+        verify(asyncSensorLifecycleOrchestrator).processHeartbeatAsync(SENSOR_ID, SensorState.CONNECTED);
+        verifyNoInteractions(sensorLifecycleOrchestrator);
     }
 }

@@ -1,16 +1,18 @@
 package org.zeus.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.zeus.api.SensorLifecycleApi;
+import org.zeus.model.HeartbeatRequest;
 import org.zeus.model.SensorRegistrationRequest;
 import org.zeus.model.SensorResponse;
 import org.zeus.model.SensorType;
+import org.zeus.service.sensorLifecycle.AsyncSensorLifecycleOrchestrator;
 import org.zeus.service.sensorLifecycle.SensorLifecycleOrchestrator;
 
 import java.util.List;
@@ -21,6 +23,7 @@ public class SensorLifecycleController implements SensorLifecycleApi {
 
     private static final Logger log = LoggerFactory.getLogger(SensorLifecycleController.class);
     private final SensorLifecycleOrchestrator sensorLifecycleOrchestrator;
+    private final AsyncSensorLifecycleOrchestrator asyncSensorLifecycleOrchestrator;
 
     @Override
     public ResponseEntity<SensorResponse> registerSensor(SensorRegistrationRequest sensorRegistrationRequest) {
@@ -52,6 +55,21 @@ public class SensorLifecycleController implements SensorLifecycleApi {
         var sensorTypes = sensorLifecycleOrchestrator.getSupportedSensorTypes();
         log.info("Successfully retrieved all supported sensor types.");
         return ResponseEntity.ok(sensorTypes);
+    }
+
+    @PostMapping("/sensors/{sensorId}/heartbeat")
+    public ResponseEntity<Void> sensorHeartbeat(
+            @PathVariable("sensorId") String sensorId,
+            @Valid @RequestBody HeartbeatRequest heartbeatRequest) {
+
+        log.info("Received heartbeat for sensor ID: {}", sensorId);
+
+        // Delegate the work to the async service
+        asyncSensorLifecycleOrchestrator.processHeartbeatAsync(sensorId, heartbeatRequest.getStatus());
+
+        log.info("Heartbeat for sensor ID: {} accepted for processing. Responding 202.", sensorId);
+        // Return 202 Accepted immediately
+        return ResponseEntity.accepted().build();
     }
 }
 

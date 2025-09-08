@@ -186,6 +186,62 @@
         }
       }
     },
+    "/sensors/{sensorId}/heartbeat": {
+      "parameters": [
+        {
+          "name": "sensorId",
+          "in": "path",
+          "required": true,
+          "description": "The unique identifier of the sensor.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Sensor Lifecycle"
+        ],
+        "summary": "Post a heartbeat",
+        "operationId": "sensorHeartbeat",
+        "requestBody": {
+          "description": "The new status of the sensor.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Heartbeat has been accepted for processing."
+          },
+          "400": {
+            "description": "Invalid status provided in the request body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sensor not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/measurements": {
       "post": {
         "tags": [
@@ -348,6 +404,17 @@
   },
   "components": {
     "schemas": {
+      "HeartbeatRequest": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/SensorState"
+          }
+        }
+      },
       "SensorRegistrationRequest": {
         "type": "object",
         "required": [
