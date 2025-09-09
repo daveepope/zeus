@@ -220,6 +220,6 @@ Telemetry API
 ![sim.png](docs/sim.png)
 
 ## Future Enhancements
-
+- observability and monitoring 
 - Integration/ Component Tests - didn't get a chance to add these but would not be much effort and we can discuss this
 - Event driven telemetry ingestion via Kafka or a more suitable messaging protocol such as MQTT, used primarily with small devices on flaky networks, such as weather sensors
